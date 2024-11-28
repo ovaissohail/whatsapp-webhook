@@ -40,6 +40,17 @@ async function sendWhatsAppMessage(to, message) {
     }
 }
 
+// First add this function at the top with your other functions
+async function forwardToPython(messageData) {
+    try {
+        const response = await axios.post('http://localhost:5000/process', messageData);
+        return response.data;
+    } catch (error) {
+        console.error('Error forwarding to Python:', error.message);
+        throw error;
+    }
+}
+
 app.get('/', (req, res) => {
     console.log('Root route hit');
     res.send('Server is up and running!');
@@ -73,9 +84,6 @@ app.post('/webhook', async (req, res) => {
     try {
         console.log('Received webhook data:', JSON.stringify(req.body, null, 2));
         
-        let phoneNumber;
-        let messageText;
-
         // First, validate that we have the required data
         if (req.body && req.body.entry && 
             req.body.entry[0] && 
@@ -86,14 +94,21 @@ app.post('/webhook', async (req, res) => {
             req.body.entry[0].changes[0].value.messages[0]) {
             
             const message = req.body.entry[0].changes[0].value.messages[0];
-            phoneNumber = message.from;
-            messageText = message.text.body;
+            const phoneNumber = message.from;
+            const messageText = message.text.body;
+            
             console.log('Message received:', {phoneNumber, messageText});
 
-            // Send echo response
-            if (phoneNumber && messageText) {
-                await sendWhatsAppMessage(phoneNumber, `Echo: ${messageText}`);
-                console.log('Echo sent successfully');
+            // Forward to Python service
+            const pythonResponse = await forwardToPython({
+                phone_number: phoneNumber,
+                message: messageText
+            });
+
+            // Send response back to WhatsApp
+            if (pythonResponse && pythonResponse.reply) {
+                await sendWhatsAppMessage(phoneNumber, pythonResponse.reply);
+                console.log('Response sent successfully');
             }
         } else {
             console.log('Received webhook event with different structure:', req.body);
