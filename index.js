@@ -5,6 +5,11 @@ const PORT = process.env.PORT || 10000;
 // Parse JSON bodies
 app.use(express.json());
 
+// ADD THIS NEW ROUTE HERE
+app.get('/', (req, res) => {
+    res.send('Server is up and running!');
+});
+
 // WhatsApp webhook verification
 app.get('/webhook', (req, res) => {
     // Your verify token (you'll set this in the Meta dashboard)
