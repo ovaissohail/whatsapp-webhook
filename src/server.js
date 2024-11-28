@@ -76,30 +76,27 @@ app.post('/webhook', async (req, res) => {
         let phoneNumber;
         let messageText;
 
-        // Handle test messages
-        if (req.body.field === 'messages') {
-            const testMessage = req.body.value.messages[0];
-            phoneNumber = testMessage.from;
-            messageText = testMessage.text.body;
-            console.log('Test message received:', messageText);
-        }
-        // Handle real messages
-        else if (req.body.entry) {
+        // First, validate that we have the required data
+        if (req.body && req.body.entry && 
+            req.body.entry[0] && 
+            req.body.entry[0].changes && 
+            req.body.entry[0].changes[0] && 
+            req.body.entry[0].changes[0].value && 
+            req.body.entry[0].changes[0].value.messages && 
+            req.body.entry[0].changes[0].value.messages[0]) {
+            
             const message = req.body.entry[0].changes[0].value.messages[0];
             phoneNumber = message.from;
             messageText = message.text.body;
-            console.log('Real message received:', messageText);
-        }
+            console.log('Message received:', {phoneNumber, messageText});
 
-        // If we successfully got a message, send a response
-        if (phoneNumber && messageText) {
-            try {
-                // Send a simple echo response for testing
+            // Send echo response
+            if (phoneNumber && messageText) {
                 await sendWhatsAppMessage(phoneNumber, `Echo: ${messageText}`);
-                console.log('Response sent successfully');
-            } catch (error) {
-                console.error('Error sending response:', error);
+                console.log('Echo sent successfully');
             }
+        } else {
+            console.log('Received webhook event with different structure:', req.body);
         }
 
         res.status(200).send('OK');
