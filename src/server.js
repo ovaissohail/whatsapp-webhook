@@ -40,10 +40,11 @@ async function sendWhatsAppMessage(to, message) {
     }
 }
 
-// First add this function at the top with your other functions
+// Update the forwardToPython function to use environment variable for URL
 async function forwardToPython(messageData) {
     try {
-        const response = await axios.post('http://localhost:5000/process', messageData);
+        const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'https://whatsapp-bot-python.onrender.com';
+        const response = await axios.post(`${PYTHON_SERVICE_URL}/process`, messageData);
         return response.data;
     } catch (error) {
         console.error('Error forwarding to Python:', error.message);
