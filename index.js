@@ -5,9 +5,39 @@ const PORT = process.env.PORT || 10000;
 // Parse JSON bodies
 app.use(express.json());
 
-// ADD THIS NEW ROUTE HERE
+// Add logging middleware
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 app.get('/', (req, res) => {
+    console.log('Root route hit');
     res.send('Server is up and running!');
+});
+
+app.get('/webhook', (req, res) => {
+    console.log('Webhook route hit');
+    const VERIFY_TOKEN = "mywebhook123";
+    
+    let mode = req.query["hub.mode"];
+    let token = req.query["hub.verify_token"];
+    let challenge = req.query["hub.challenge"];
+    
+    console.log('Webhook params:', { mode, token, challenge });
+    
+    if (mode && token) {
+        if (mode === "subscribe" && token === VERIFY_TOKEN) {
+            console.log("WEBHOOK_VERIFIED");
+            res.status(200).send(challenge);
+        } else {
+            console.log("WEBHOOK_VERIFICATION_FAILED");
+            res.sendStatus(403);
+        }
+    } else {
+        console.log("Missing mode or token");
+        res.sendStatus(400);
+    }
 });
 
 // WhatsApp webhook verification
