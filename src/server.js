@@ -43,7 +43,7 @@ async function sendWhatsAppMessage(to, message) {
 // Update the forwardToPython function to use environment variable for URL
 async function forwardToPython(messageData) {
     try {
-        const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'https://whatsapp-bot-python.onrender.com';
+        const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL;
         const response = await axios.post(`${PYTHON_SERVICE_URL}/process`, messageData);
         return response.data;
     } catch (error) {
@@ -59,7 +59,7 @@ app.get('/', (req, res) => {
 
 app.get('/webhook', (req, res) => {
     console.log('Webhook route hit');
-    const VERIFY_TOKEN = "12345";
+    const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
     
     let mode = req.query["hub.mode"];
     let token = req.query["hub.verify_token"];
