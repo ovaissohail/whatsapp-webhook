@@ -64,12 +64,26 @@ app.get('/webhook', (req, res) => {
     }
 });
 
-// Handle incoming webhook messages
-app.post('/webhook', (req, res) => {
-    console.log('Received webhook:', JSON.stringify(req.body, null, 2));
-    
-    // Send a 200 OK response
-    res.status(200).send('OK');
+app.post('/webhook', async (req, res) => {
+    try {
+        console.log('Received webhook data:', JSON.stringify(req.body, null, 2));
+        
+        // Handle test messages (which come directly in the format you showed)
+        if (req.body.field === 'messages') {
+            const testMessage = req.body.value.messages[0];
+            console.log('Test message received:', testMessage.text.body);
+        }
+        // Handle real messages (which come in the entry array format)
+        else if (req.body.entry) {
+            const message = req.body.entry[0].changes[0].value.messages[0];
+            console.log('Real message received:', message);
+        }
+
+        res.status(200).send('OK');
+    } catch (error) {
+        console.error('Error processing webhook:', error);
+        res.status(200).send('OK');
+    }
 });
 
 app.listen(PORT, () => {
