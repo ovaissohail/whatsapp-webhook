@@ -96,14 +96,16 @@ app.post('/webhook', async (req, res) => {
             
             const message = req.body.entry[0].changes[0].value.messages[0];
             const phoneNumber = message.from;
-            const messageText = message.text.body;
+            const messageText = message.text?.body || '';
             
             console.log('Message received:', {phoneNumber, messageText});
 
             // Forward to Python service
             const pythonResponse = await forwardToPython({
                 phone_number: phoneNumber,
-                message: messageText
+                message: messageText,
+                messageType: message.type,
+                ...(message.audio && { audioData: message.audio })
             });
 
             // Send response back to WhatsApp
