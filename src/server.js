@@ -86,27 +86,40 @@ app.post('/webhook', async (req, res) => {
         console.log('Received webhook data:', JSON.stringify(req.body, null, 2));
         
         // First, validate that we have the required data
-        if (req.body && req.body.entry && 
-            req.body.entry[0] && 
-            req.body.entry[0].changes && 
-            req.body.entry[0].changes[0] && 
-            req.body.entry[0].changes[0].value && 
-            req.body.entry[0].changes[0].value.messages && 
-            req.body.entry[0].changes[0].value.messages[0]) {
-            
+        if (req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
             const message = req.body.entry[0].changes[0].value.messages[0];
             const phoneNumber = message.from;
-            const messageText = message.text?.body || '';
             
-            console.log('Message received:', {phoneNumber, messageText});
+            // Create base message data
+            let messageData = {
+                phone_number: phoneNumber,
+                messageType: message.type,
+            };
+
+            // Handle different message types
+            switch (message.type) {
+                case 'text':
+                    messageData.message = message.text.body;
+                    break;
+                case 'audio':
+                    messageData.audioData = message.audio;
+                    break;
+                case 'image':
+                    messageData.imageData = message.image;
+                    messageData.message = message.image.caption || ''; // Include caption if exists
+                    break;
+                case 'location':
+                    messageData.location = {
+                        latitude: message.location.latitude,
+                        longitude: message.location.longitude
+                    };
+                    break;
+            }
+
+            console.log('Message received:', messageData);
 
             // Forward to Python service
-            const pythonResponse = await forwardToPython({
-                phone_number: phoneNumber,
-                message: messageText,
-                messageType: message.type,
-                ...(message.audio && { audioData: message.audio })
-            });
+            const pythonResponse = await forwardToPython(messageData);
 
             // Send response back to WhatsApp
             if (pythonResponse && pythonResponse.reply) {
