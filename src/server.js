@@ -90,10 +90,11 @@ app.post('/webhook', async (req, res) => {
             const message = req.body.entry[0].changes[0].value.messages[0];
             const phoneNumber = message.from;
             
-            // Create base message data
+            // Create base message data with required fields
             let messageData = {
                 phone_number: phoneNumber,
                 messageType: message.type,
+                message: '' // Initialize empty message
             };
 
             // Handle different message types
@@ -106,7 +107,7 @@ app.post('/webhook', async (req, res) => {
                     break;
                 case 'image':
                     messageData.imageData = message.image;
-                    messageData.message = message.image.caption || ''; // Include caption if exists
+                    messageData.message = message.image.caption || '';
                     break;
                 case 'location':
                     messageData.location = {
@@ -114,6 +115,8 @@ app.post('/webhook', async (req, res) => {
                         longitude: message.location.longitude
                     };
                     break;
+                default:
+                    console.log(`Unhandled message type: ${message.type}`);
             }
 
             console.log('Message received:', messageData);
@@ -122,7 +125,7 @@ app.post('/webhook', async (req, res) => {
             const pythonResponse = await forwardToPython(messageData);
 
             // Send response back to WhatsApp
-            if (pythonResponse && pythonResponse.reply) {
+            if (pythonResponse?.reply) {
                 await sendWhatsAppMessage(phoneNumber, pythonResponse.reply);
                 console.log('Response sent successfully');
             }
@@ -133,6 +136,7 @@ app.post('/webhook', async (req, res) => {
         res.status(200).send('OK');
     } catch (error) {
         console.error('Error processing webhook:', error);
+        // Always return 200 for webhook
         res.status(200).send('OK');
     }
 });
