@@ -103,9 +103,11 @@ app.post('/webhook', async (req, res) => {
             const phoneNumber = message.from;
             
             // Create base message data with required fields
+            // Create base message data with required fields
             let messageData = {
                 phone_number: phoneNumber,
                 messageType: message.type,
+                message: '' // Initialize empty message
                 message: '' // Initialize empty message
             };
 
@@ -120,6 +122,7 @@ app.post('/webhook', async (req, res) => {
                 case 'image':
                     messageData.imageData = message.image;
                     messageData.message = message.image.caption || '';
+                    messageData.message = message.image.caption || '';
                     break;
                 case 'location':
                     messageData.message = `${message.location.latitude}, ${message.location.longitude}`;
@@ -128,6 +131,8 @@ app.post('/webhook', async (req, res) => {
                         longitude: message.location.longitude
                     };
                     break;
+                default:
+                    console.log(`Unhandled message type: ${message.type}`);
                 default:
                     console.log(`Unhandled message type: ${message.type}`);
             }
